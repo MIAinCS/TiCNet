@@ -1,0 +1,15 @@
+__pycache__/
+.vscode/
+.idea/
+*.linux-x86_64-3.8/
+preprocessed_data/
+runs/
+CT/
+*results/
+
+*.egg
+*.ckpt
+*.pth
+*.nrrd
+*.npy
+
