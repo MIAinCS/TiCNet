@@ -21,7 +21,7 @@ from net.main_net import build_model
 
 warnings.filterwarnings("ignore")
 # setup cuda device
-os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1,3'
 this_module = sys.modules[__name__]
 setproctitle.setproctitle("ticnet-train")
 

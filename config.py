@@ -13,7 +13,7 @@ torch.cuda.manual_seed_all(SEED)
 BASE = os.getcwd()
 data_config = {
     # put combined LUNA16 .mhd files into one folder
-    'data_dir': '/home/sharedata/datasets/luna16/LUNG16/subset3',
+    'data_dir': '/home/sharedata/datasets/luna16/LUNG16',
     # put lung mask downloaded from LUNA16 to this path
     'lung_mask_dir': '/home/sharedata/datasets/luna16/seg-lungs-LUNA16',
     # directory for putting all preprocessed results for training to this path
@@ -21,7 +21,7 @@ data_config = {
     # original annotations csv file path
     'annos_dir': os.path.join(BASE, 'annotations/annotations.csv'),
     'annos_excluded_dir': os.path.join(BASE, 'annotations/annotations_excluded.csv'),
-    "seriesuids_dir": os.path.join(BASE, 'split/3_val.csv'),
+    "seriesuids_dir": os.path.join(BASE, 'annotations/seriesuids.csv'),
 
     'new_annos_dir': os.path.join(BASE, 'annotations/new_annotations.csv'),
     'new_annos_excluded_dir': os.path.join(BASE, 'annotations/new_annotations_excludedd.csv'),
@@ -59,6 +59,7 @@ net_config = {
     'bound_size': 12,
     'blacklist': [],
     'num_class': 2,
+    'hidden_dim': 128,
     'aux_loss': False,
 
     'augtype': {'flip': True, 'rotate': True, 'scale': True, 'swap': False},
@@ -128,9 +129,9 @@ train_config = {
     'epoch_rcnn': 65,
     'num_workers': 8,
 
-    'train_set_list': ['split/9_train.csv'],
-    'val_set_list': ['split/9_val.csv'],
-    'test_set_name': 'split/9_val.csv',
+    'train_set_list': ['split/2_train.csv'],
+    'val_set_list': ['split/2_val.csv'],
+    'test_set_name': 'split/2_val.csv',
     'label_types': ['bbox'],
     'DATA_DIR': data_config['preprocessed_data_dir'],
     'ROOT_DIR': os.getcwd(),
@@ -139,6 +140,6 @@ train_config = {
 
 
 train_config['RESULTS_DIR'] = os.path.join(train_config['ROOT_DIR'], 'results')
-train_config['out_dir'] = os.path.join(train_config['RESULTS_DIR'], 'ticnet/fold9')
+train_config['out_dir'] = os.path.join(train_config['RESULTS_DIR'], 'ticnet/2_fold')
 # train_config['initial_checkpoint'] = os.path.join(train_config['out_dir'], 'model/120.pth')
 train_config['initial_checkpoint'] = None

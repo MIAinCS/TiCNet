@@ -6,6 +6,7 @@ preprocessed_data/
 runs/
 CT/
 *results/
+build/
 
 *.egg
 *.ckpt

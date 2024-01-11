@@ -151,8 +151,7 @@ class MainNet(nn.Module):
 
         if self.mode in ['train', 'valid']:
 
-            self.rpn_labels, self.rpn_label_assigns, 
-            self.rpn_label_weights, self.rpn_targets, self.rpn_target_weights = \
+            self.rpn_labels, self.rpn_label_assigns, self.rpn_label_weights, self.rpn_targets, self.rpn_target_weights = \
                 make_rpn_target(self.cfg, self.mode, inputs, self.rpn_window, truth_boxes, truth_labels)
 
             if self.use_rcnn:

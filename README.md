@@ -1,8 +1,4 @@
 # TiCNet: Transformer in Convolutional Neural Network for Pulmonary Nodule Detection on CT images
-```
-
-```
-
 ## Usage
 
 The project structure and intention are as follows :
