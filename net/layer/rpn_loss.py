@@ -1,7 +1,7 @@
 from net.layer.losses import *
 
 
-def rpn_loss(logits, deltas, labels, label_weights, targets, target_weights, cfg, mode='train', delta_sigma=3.0):
+def rpn_loss(logits, deltas, labels, label_weights, targets, cfg, mode='train'):
     batch_size, num_windows, num_classes = logits.size()
     batch_size_k = batch_size
     labels = labels.long()

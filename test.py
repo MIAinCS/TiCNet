@@ -45,14 +45,14 @@ def main():
     model = model.cuda()
 
     if initial_checkpoint:
-        print('Loading model from {}...'.format(initial_checkpoint))
+        print(f'Loading model from {initial_checkpoint}...')
         checkpoint = torch.load(initial_checkpoint)
         epoch = checkpoint['epoch']
 
         model.load_state_dict(checkpoint['state_dict'])
-        # print(net.state_dict())
+
     else:
-        print('No model weight file specified. ✘')
+        print('No model weight file specified.')
         return
 
     save_dir = os.path.join(args.out_dir, 'res', str(epoch))
@@ -73,12 +73,12 @@ def eval(net, dataset, save_dir=None):
     rcnn_res = []
     ensemble_res = []
 
-    print('Total # of eval data {}'.format(len(dataset)))
+    print(f'Total num of eval data {len(dataset)}')
     for i, (input, truth_bboxes, truth_labels, image) in enumerate(dataset):
         try:
             pid = dataset.filenames[i]
 
-            print('Scan #{} pid:{} \nPredicting {}...'.format(i, pid, image.shape))
+            print(f'Scan {i} pid {pid} shape {image.shape}')
 
             with torch.no_grad():
                 input = input.cuda().unsqueeze(0)
@@ -93,9 +93,8 @@ def eval(net, dataset, save_dir=None):
                     keeps.append(ensembles[index])
             keeps = np.array(keeps)
 
-            print('✓ rpn', rpns.shape)
-            print('✓ rcnn', rcnns.shape)
-            print('✓ ensemble', ensembles.shape)
+            print(f'rpn: {rpns.shape}, rcnn: {rcnns.shape}, ensemble: {ensembles.shape}')
+ 
 
             if len(rpns):
                 rpns = rpns[:, 1:]
@@ -113,17 +112,14 @@ def eval(net, dataset, save_dir=None):
                 ensembles = ensembles[:, 1:]
                 ensembles = ensembles[:, [3, 2, 1, 4, 0]]
                 names = np.array([[pid]] * len(ensembles))
-                ensemble_res.append(np.concatenate([names, ensembles], axis=1))     
+                ensemble_res.append(np.concatenate([names, ensembles], axis=1))      
 
+        except Exception as e:
+            traceback.print_exc()
+        finally:
             # Clear gpu memory
             del input, truth_bboxes, truth_labels, image
             torch.cuda.empty_cache()
-
-        except Exception as e:
-            del input, truth_bboxes, truth_labels, image
-            torch.cuda.empty_cache()
-            traceback.print_exc()
-            return
 
     # Generate prediction csv for the use of performning FROC analysis
     # Save both rpn and rcnn results
@@ -131,8 +127,7 @@ def eval(net, dataset, save_dir=None):
     rcnn_res = np.concatenate(rcnn_res, axis=0)
     ensemble_res = np.concatenate(ensemble_res, axis=0)
 
-    col_names = ['seriesuid', 'coordX', 'coordY',
-                 'coordZ', 'diameter_mm', 'probability']
+    col_names = ['seriesuid', 'coordX', 'coordY', 'coordZ', 'diameter_mm', 'probability']
     eval_dir = os.path.join(save_dir, 'FROC')
     rpn_submission_path = os.path.join(eval_dir, 'submission_rpn.csv')
     rcnn_submission_path = os.path.join(eval_dir, 'submission_rcnn.csv')

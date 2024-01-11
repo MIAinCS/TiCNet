@@ -10,16 +10,23 @@ from config import train_config
 
 class Atten_Conv_Block(nn.Module):
     def __init__(self, channel):
+
         super(Atten_Conv_Block, self).__init__()
         self.relu = nn.ReLU(inplace=False)
-        self.conv1 = nn.Sequential(nn.Conv3d(channel, channel, kernel_size=3, padding=1, bias=False),
-                                   nn.BatchNorm3d(channel, momentum=train_config['bn_momentum']),
-                                   nn.ReLU(inplace=True))
+        self.conv1 = nn.Sequential(
+            nn.Conv3d(channel, channel, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm3d(channel, momentum=train_config['bn_momentum']),
+            nn.ReLU(inplace=True)
+        )
         self.adppool = nn.AdaptiveAvgPool3d(1)
-        self.rw_conv = nn.Sequential(nn.Conv3d(channel, channel, kernel_size=3, padding=1, bias=True),
-                                     nn.BatchNorm3d(channel))
-        self.fc_adapt_channels = nn.Sequential(nn.Conv3d(channel, channel, kernel_size=3, padding=1, bias=True),
-                                               nn.Sigmoid())
+        self.rw_conv = nn.Sequential(
+            nn.Conv3d(channel, channel, kernel_size=3, padding=1, bias=True),
+            nn.BatchNorm3d(channel)
+        )
+        self.fc_adapt_channels = nn.Sequential(
+            nn.Conv3d(channel, channel, kernel_size=3, padding=1, bias=True),
+            nn.Sigmoid()
+        )
 
     def forward(self, x):
         out = self.relu(x)

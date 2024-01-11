@@ -54,14 +54,12 @@ class FeatureNet(nn.Module):
         self.forw1 = nn.Sequential(
             ResBlock3d(24, 32),
             ResBlock3d(32, 32),
-            # CBAM(32),
             Atten_Conv_Block(32),
         )
 
         self.forw2 = nn.Sequential(
             ResBlock3d(32, 64),
             ResBlock3d(64, 64),
-            # CBAM(64),
             Atten_Conv_Block(64),
         )
 
@@ -69,7 +67,6 @@ class FeatureNet(nn.Module):
             ResBlock3d(64, 64),
             ResBlock3d(64, 64),
             ResBlock3d(64, 64),
-            # CBAM(64),
             Atten_Conv_Block(64),
         )
 
@@ -77,62 +74,47 @@ class FeatureNet(nn.Module):
             ResBlock3d(64, 64),
             ResBlock3d(64, 64),
             ResBlock3d(64, 64),
-            # DoubleAtten(64),
             Atten_Conv_Block(64),
         )
 
-        # skip connection in U-net
         self.back1 = nn.Sequential(
-            # 64 + 64 + 3, where 3 is the channel dimension of coord
             ResBlock3d(128, 128),
             ResBlock3d(128, 128),
             ResBlock3d(128, out_channels),
-            # CBAM(128),
             Atten_Conv_Block(out_channels),
         )
 
-        # skip connection in U-net
         self.back2 = nn.Sequential(
             ResBlock3d(192, 64),
             ResBlock3d(64, 64),
             ResBlock3d(64, 64),
-            # CBAM(64),
             Atten_Conv_Block(64),
         )
 
-        # skip connection in U-net
         self.back3 = nn.Sequential(
             ResBlock3d(128, 128),
             ResBlock3d(128, 128),
             ResBlock3d(128, 128),
-            # CBAM(64),
             Atten_Conv_Block(128),
         )
 
-        self.maxpool1 = nn.MaxPool3d(kernel_size=2, stride=2,
-                                     return_indices=True)
-        self.maxpool2 = nn.MaxPool3d(kernel_size=2, stride=2,
-                                     return_indices=True)
-        self.maxpool3 = nn.MaxPool3d(kernel_size=2, stride=2,
-                                     return_indices=True)
-        self.maxpool4 = nn.MaxPool3d(kernel_size=2, stride=2,
-                                     return_indices=True)
+        self.maxpool1 = nn.MaxPool3d(kernel_size=2, stride=2, return_indices=True)
+        self.maxpool2 = nn.MaxPool3d(kernel_size=2, stride=2, return_indices=True)
+        self.maxpool3 = nn.MaxPool3d(kernel_size=2, stride=2, return_indices=True)
+        self.maxpool4 = nn.MaxPool3d(kernel_size=2, stride=2, return_indices=True)
+
         self.position_embedding = build_position_encoding(config)
         self.transformer = build_transformer(config)
 
         self.scale1 = conv_3nV1(32, 64, 64)
-
         self.scale2 = conv_3nV1(64, 64, 64)
-
         self.scale3 = conv_2nV1(64, 64)
 
-        # upsampling in U-net
         self.path1 = nn.Sequential(
             nn.ConvTranspose3d(128, 128, kernel_size=2, stride=2),
             nn.BatchNorm3d(128),
             nn.ReLU(inplace=True))
 
-        # upsampling in U-net
         self.path2 = nn.Sequential(
             nn.ConvTranspose3d(64, 64, kernel_size=2, stride=2),
             nn.BatchNorm3d(64),
@@ -144,22 +126,20 @@ class FeatureNet(nn.Module):
         out1 = self.forw1(out_pool)  # 32
         out1_pool, _ = self.maxpool2(out1)
         out2 = self.forw2(out1_pool)  # 64
-        # out2 = self.drop(out2)
         out2_pool, _ = self.maxpool3(out2)
         out3 = self.forw3(out2_pool)  # 64
         out3_pool, _ = self.maxpool4(out3)
         out4 = self.forw4(out3_pool)  # 64
-        # out4 = self.drop(out4)
-        pe = self.position_embedding(out4)
-        out4_tr = self.transformer(out4, pe)
 
-        out2_scale = self.scale1(out1, out2, out3)
-        out3_scale = self.scale2(out2, out3, out4)
-        out4_scale = self.scale3(out3, out4)
+        pe = self.position_embedding(out4)
+        out4_tr = self.transformer(out4, pe) # 64
+
+        out2_scale = self.scale1(out1, out2, out3) # 64
+        out3_scale = self.scale2(out2, out3, out4) # 64
+        out4_scale = self.scale3(out3, out4) # 64
 
         comb3 = self.back3(torch.cat((out4_tr, out4_scale), 1))
         rev2 = self.path1(comb3)
-        # rev2 = self.path1(out4_tr)
         comb2 = self.back2(torch.cat((rev2, out3_scale), 1))  # 96+96
         rev1 = self.path2(comb2)
         comb1 = self.back1(torch.cat((rev1, out2_scale), 1))  # 64+64

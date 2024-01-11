@@ -120,7 +120,7 @@ def get_lung_box(binary_mask, new_shape, margin=5):
 def preprocess(params):
     pid, lung_mask_dir, img_dir, save_dir, do_resample = params
 
-    print('Preprocessing %s...' % (pid))
+    print(f'Preprocessing {pid}...')
 
     binary_mask, _, _ = load_itk_image(os.path.join(lung_mask_dir, '%s.mhd' % (pid)))
     img, origin, spacing = load_itk_image(os.path.join(img_dir, '%s.mhd' % (pid)))
@@ -140,13 +140,7 @@ def preprocess(params):
 
     seg_img = seg_img[z_min:z_max, y_min:y_max, x_min:x_max]
 
-    # np.save(os.path.join(save_dir, '%s_origin.npy' % (pid)), origin)
-    # np.save(os.path.join(save_dir, '%s_spacing.npy' % (pid)), spacing)
-    # np.save(os.path.join(save_dir, '%s_ebox.npy' % (pid)), np.array((z_min, y_min, x_min)))
     nrrd.write(os.path.join(save_dir, '%s_seg.nrrd' % (pid)), seg_img)
-
-    print('Finished %s' % (pid))
-    print()
 
 
 def main():
@@ -163,7 +157,6 @@ def main():
         os.makedirs(save_dir)
 
     uids = pd.read_csv(seriesuids_dir, header=None)[0]
-    # print(uids)
 
     params_lists = []
     for pid in uids:

@@ -73,10 +73,8 @@ def draw_nms(predicts_list, threshold):
 
 
 def draw_boxes(filename, pid, gt_list, pred_list, outpath):
-    # print(filename)
     arr, options = nrrd.read(filename)
     png_dir = outpath + pid
-    # print(png_dir)
     if not os.path.exists(png_dir):
         os.makedirs(png_dir)
 
@@ -95,7 +93,6 @@ def draw_boxes(filename, pid, gt_list, pred_list, outpath):
 
             start = int(axis[2] - int(axis[3] / 2))
             end = int(axis[2] + int(axis[3] / 2))
-            # print("p_start:{}  p_end:{}".format(start, end))
             if start <= i <= end:
                 rect = plt.Rectangle(
                     (axis[0] - axis[3] / 2, axis[1] - axis[3] / 2),

@@ -1,15 +1,13 @@
-import sys
-
-sys.path.append('../')
 import numpy as np
 import scipy.ndimage
 from skimage import measure, morphology
 import SimpleITK as sitk
 from multiprocessing import Pool
 import os
-import nrrd
-from config import config
+from config import data_config as config
 import pandas as pd
+
+
 
 
 def load_itk_image(filename):
@@ -26,7 +24,7 @@ def load_itk_image(filename):
     return numpyImage, numpyOrigin, numpySpacing
 
 
-def HU2uint8(image, HU_min=-200.0, HU_max=600.0, HU_nan=-2000.0):
+def HU2uint8(image, HU_min=-1200.0, HU_max=600.0, HU_nan=-2000.0):
     """
     Convert HU unit into uint8 values. First bound HU values by predfined min
     and max, and then normalize
@@ -313,8 +311,8 @@ def convex_hull_dilate(binary_mask, dilate_factor=1.5, iterations=10):
             if np.sum(slice_convex) <= dilate_factor * np.sum(slice_binary):
                 binary_mask_dilated[i] = slice_convex
 
-    struct = scipy.ndimage.morphology.generate_binary_structure(3, 1)
-    binary_mask_dilated = scipy.ndimage.morphology.binary_dilation(
+    struct = scipy.ndimage.generate_binary_structure(3, 1)
+    binary_mask_dilated = scipy.ndimage.binary_dilation(
         binary_mask_dilated, structure=struct, iterations=10)
 
     return binary_mask_dilated
@@ -375,7 +373,7 @@ def resample(image, spacing, new_spacing=[1.0, 1.0, 1.0], order=1):
 
     resize_factor = new_shape / image.shape
 
-    image_new = scipy.ndimage.interpolation.zoom(image, resize_factor,
+    image_new = scipy.ndimage.zoom(image, resize_factor,
                                                  mode='nearest', order=order)
 
     return (image_new, resample_spacing)
@@ -474,7 +472,7 @@ def auxiliary_segment(image):
 def preprocess(params):
     pid, lung_mask_dir, img_dir, save_dir, do_resample = params
 
-    print('Preprocessing %s...' % (pid))
+    print(f'Preprocessing {pid}...')
 
     lung_mask, _, _ = load_itk_image(os.path.join(lung_mask_dir, '%s.mhd' % (pid)))
     img, origin, spacing = load_itk_image(os.path.join(img_dir, '%s.mhd' % (pid)))
@@ -500,10 +498,8 @@ def preprocess(params):
     np.save(os.path.join(save_dir, '%s_origin.npy' % (pid)), origin)
     np.save(os.path.join(save_dir, '%s_spacing.npy' % (pid)), spacing)
     np.save(os.path.join(save_dir, '%s_ebox.npy' % (pid)), np.array((z_min, y_min, x_min)))
-    nrrd.write(os.path.join(save_dir, '%s.nrrd' % (pid)), seg_img)
+    np.save(os.path.join(save_dir, '%s.npy' % (pid)), seg_img)
 
-    print('Finished %s' % (pid))
-    print()
 
 
 def main():
@@ -519,7 +515,6 @@ def main():
         os.makedirs(save_dir)
 
     uids = pd.read_csv(seriesuids_dir, header=None)[0]
-    # print(uids)
 
     params_lists = []
     for pid in uids:

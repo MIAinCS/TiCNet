@@ -3,6 +3,7 @@ import sys
 sys.path.append('../')
 from util import *
 import csv
+import config as config
 
 
 def load_itk_image(filename):
@@ -21,7 +22,6 @@ def load_itk_image(filename):
 
 def get_ct_data(ct_file):
     seriesuid = ct_file.split('/')[-1][:-4]
-    # print(seriesuid)
     img, Origin, Spacing = load_itk_image(ct_file)
 
     return seriesuid, Origin, Spacing
@@ -31,10 +31,8 @@ def get_anno_dict(anno_file):
     anno_data = pd.read_csv(anno_file)
 
     uid = anno_data["seriesuid"]
-    # print(len(uid))
     data = anno_data[["coordX", "coordY", "coordZ", "diameter_mm"]]
     data = np.array(data)
-    # print(len(data))
     anno_dict = dict([(id, []) for id in uid])
     for i in range(len(uid)):
         anno_dict[uid[i]].append(data[i])
@@ -60,9 +58,9 @@ def generate_label(annos_dict, seriesuids_dir, img_dir):
                 new_annos.append(new_coord)
             annos_dict[uid] = new_annos
         else:
-            print('%s does not have any nodules!!!' % (uid))
+            print(f'{uid} does not have any nodules.')
         np.save(os.path.join(img_dir, '%s_bboxes.npy' % (uid)), np.array(new_annos))
-        print('Finished masks to bboxes %s' % (uid))
+        print(f'Finished masks to bboxes {uid}')
 
 
 def annotation_to_npy(annos_dir, seriesuids_dir, img_dir, annos_save_dir):
@@ -86,7 +84,6 @@ def annotation_to_npy(annos_dir, seriesuids_dir, img_dir, annos_save_dir):
 def annotation_exclude_to_npy(annos_excluded_dir, img_dir, annos_save_dir):
     try:
         annos_exclude_dict = get_anno_dict(annos_excluded_dir)
-        # print(annos_dict)
     except:
         print("Unexpected error:", sys.exc_info()[0])
 

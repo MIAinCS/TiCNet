@@ -10,16 +10,18 @@ from scipy.stats import norm
 
 class RpnHead(nn.Module):
     def __init__(self, config, in_channels=128):
+
         super(RpnHead, self).__init__()
         self.drop = nn.Dropout3d(p=0.5, inplace=False)
-        self.conv = nn.Sequential(nn.Conv3d(in_channels, 64, kernel_size=1),
-                                  nn.ReLU())
+        self.conv = nn.Sequential(
+            nn.Conv3d(in_channels, 64, kernel_size=1),
+            nn.ReLU()
+        )
 
         self.logits = nn.Conv3d(64, 1 * len(config['anchors']), kernel_size=1)
         self.deltas = nn.Conv3d(64, 6 * len(config['anchors']), kernel_size=1)
 
     def forward(self, f):
-        # out = self.drop(f)
         out = self.conv(f)
 
         logits = self.logits(out)
@@ -39,21 +41,22 @@ class RpnHead(nn.Module):
 
 class RcnnHead(nn.Module):
     def __init__(self, cfg, in_channels=128):
+
         super(RcnnHead, self).__init__()
         self.num_class = cfg['num_class']
         self.crop_size = cfg['rcnn_crop_size']
 
-        self.fc1 = nn.Linear(
-            in_channels * self.crop_size[0] * self.crop_size[1] * self.crop_size[2], 512)
+        self.fc1 = nn.Linear(in_channels * self.crop_size[0] * self.crop_size[1] * self.crop_size[2], 512)
         self.fc2 = nn.Linear(512, 256)
         self.logit = nn.Linear(256, self.num_class)
         self.delta = nn.Linear(256, self.num_class * 6)
 
     def forward(self, crops):
         x = crops.view(crops.size(0), -1)
+
         x = F.relu(self.fc1(x), inplace=True)
         x = F.relu(self.fc2(x), inplace=True)
-        # x = F.dropout(x, 0.5, training=self.training)
+
         logits = self.logit(x)
         deltas = self.delta(x)
 
@@ -62,6 +65,7 @@ class RcnnHead(nn.Module):
 
 class CropRoi(nn.Module):
     def __init__(self, cfg):
+
         super(CropRoi, self).__init__()
         self.cfg = cfg
         self.rcnn_crop_size = cfg['rcnn_crop_size']
@@ -123,18 +127,14 @@ class MainNet(nn.Module):
             use origin img/down_4 as another cls feature map
         """
 
-        # feat_4:[batch_size, channels:64, D:16, H:16, W:16]
         features, feat_4 = data_parallel(self.feature_net, inputs)
-        fs = features[-1]  # [12, 128, 32, 32, 32]
+        fs = features[-1]
 
-        self.rpn_logits_flat, self.rpn_deltas_flat = data_parallel(
-            self.rpn, fs)
+        self.rpn_logits_flat, self.rpn_deltas_flat = data_parallel(self.rpn, fs)
 
         b, D, H, W, _, num_class = self.rpn_logits_flat.shape
 
-        # print('rpn_logit ', self.rpn_logits_flat.shape)
         self.rpn_logits_flat = self.rpn_logits_flat.view(b, -1, 1)
-        # print('rpn_delta ', self.rpn_deltas_flat.shape)
         self.rpn_deltas_flat = self.rpn_deltas_flat.view(b, -1, 6)
 
         feature_size = fs.shape[2:]       
@@ -151,14 +151,13 @@ class MainNet(nn.Module):
 
         if self.mode in ['train', 'valid']:
 
-            self.rpn_labels, self.rpn_label_assigns, self.rpn_label_weights, self.rpn_targets, self.rpn_target_weights = \
-                make_rpn_target(self.cfg, self.mode, inputs,
-                                self.rpn_window, truth_boxes, truth_labels)
+            self.rpn_labels, self.rpn_label_assigns, 
+            self.rpn_label_weights, self.rpn_targets, self.rpn_target_weights = \
+                make_rpn_target(self.cfg, self.mode, inputs, self.rpn_window, truth_boxes, truth_labels)
 
             if self.use_rcnn:
                 self.rpn_proposals, self.rcnn_labels, self.rcnn_assigns, self.rcnn_targets = \
-                    make_rcnn_target(self.cfg, self.mode, inputs, self.rpn_proposals,
-                                     truth_boxes, truth_labels)
+                    make_rcnn_target(self.cfg, self.mode, inputs, self.rpn_proposals,truth_boxes, truth_labels)
 
         # rcnn proposals
         self.detections = copy.deepcopy(self.rpn_proposals)
@@ -168,35 +167,38 @@ class MainNet(nn.Module):
             if len(self.rpn_proposals) > 0:
                 # rcnn on down_4
                 rcnn_crops = self.rcnn_crop(feat_4, inputs, self.rpn_proposals)
-                # # rcnn on the last feature map
-                # last_rcnn_crops = self.rcnn_crop(features[1], inputs, self.rpn_proposals)
 
-                # mixup_crops = 0.5 * rcnn_crops + 0.5 * last_rcnn_crops
-
-                self.rcnn_logits, self.rcnn_deltas = data_parallel(
-                    self.rcnn_head, rcnn_crops)
+                self.rcnn_logits, self.rcnn_deltas = data_parallel(self.rcnn_head, rcnn_crops)
                 self.detections, self.keeps = rcnn_nms(self.cfg, self.mode, inputs, self.rpn_proposals,
                                                        self.rcnn_logits, self.rcnn_deltas)
 
             if self.mode in ['eval']:
                 # Ensemble
-                fpr_res = get_probability(self.cfg, self.mode, inputs, self.rpn_proposals, self.rcnn_logits,
-                                          self.rcnn_deltas)
-                self.ensemble_proposals[:, 1] = self.ensemble_proposals[:,
-                                                                        1] * 0.5 + fpr_res[:, 0] * 0.5
+                fpr_res = get_probability(self.cfg, self.mode, inputs, self.rpn_proposals, self.rcnn_logits, self.rcnn_deltas)
+                self.ensemble_proposals[:, 1] = self.ensemble_proposals[:, 1] * 0.5 + fpr_res[:, 0] * 0.5
 
     def loss(self):
 
         self.rcnn_cls_loss, self.rcnn_reg_loss, self.iou_loss = \
             torch.zeros(1).cuda(), torch.zeros(1).cuda(), torch.zeros(1).cuda()
 
-        self.rpn_cls_loss, self.rpn_reg_loss = rpn_loss(self.rpn_logits_flat, self.rpn_deltas_flat, self.rpn_labels,
-                                                        self.rpn_label_weights, self.rpn_targets,
-                                                        self.rpn_target_weights, self.cfg, mode=self.mode)
+        self.rpn_cls_loss, self.rpn_reg_loss = rpn_loss(
+            logits=self.rpn_logits_flat, 
+            deltas=self.rpn_deltas_flat, 
+            labels=self.rpn_labels,
+            label_weights=self.rpn_label_weights, 
+            targets=self.rpn_targets,
+            cfg=self.cfg, 
+            mode=self.mode
+        )
 
         if self.use_rcnn:
-            self.rcnn_cls_loss, self.rcnn_reg_loss = rcnn_loss(self.rcnn_logits, self.rcnn_deltas, self.rcnn_labels,
-                                                               self.rcnn_targets)
+            self.rcnn_cls_loss, self.rcnn_reg_loss = rcnn_loss(
+                logits=self.rcnn_logits, 
+                deltas=self.rcnn_deltas, 
+                labels=self.rcnn_labels,
+                targets=self.rcnn_targets
+            )
 
         self.total_loss = self.rpn_cls_loss + self.rpn_reg_loss \
             + self.rcnn_cls_loss + self.rcnn_reg_loss

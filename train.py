@@ -97,7 +97,7 @@ def main():
     start_epoch = 0
 
     if args.checkpoint:
-        print('Loading model from {}...'.format(args.checkpoint))
+        print(f'Loading model from {args.checkpoint}')
         checkpoint = torch.load(args.checkpoint)
         start_epoch = checkpoint['epoch']
         state = model.state_dict()
@@ -107,7 +107,7 @@ def main():
             model.load_state_dict(state)
             optimizer.load_state_dict(checkpoint['optimizer'])
         except:
-            print('Load something failed! ✘')
+            print('Load checkpoint failed.')
             traceback.print_exc()
 
     start_epoch = start_epoch + 1
@@ -126,8 +126,8 @@ def main():
     print('[Model configuration]')
     pprint.pprint(net_config)
 
-    print('Start_epoch %d, out_dir %s' % (start_epoch, args.out_dir))
-    print('Length of train loader %d, length of valid loader %d' % (len(train_loader), len(val_loader)))
+    print(f'Start_epoch {start_epoch}, out_dir {args.out_dir}')
+    print(f'Length of train loader {len(train_loader)}, length of valid loader {len(val_loader)}')
 
     # Write graph to tensorboard for visualization
     writer = SummaryWriter(tb_out_dir)
@@ -149,16 +149,16 @@ def main():
             model.use_rcnn = False
 
         start = time.time()
+        batch_size = train_config['batch_size']
 
         print('\n')
-        print('Start epoch {}, batch_size {}, lr {}, use_rcnn {}'
-              .format(i, train_config['batch_size'], lr, model.use_rcnn))
+        print(f'Start epoch {i}, batch_size {batch_size}, lr {lr}, use_rcnn {model.use_rcnn}')
 
         train(model, train_loader, optimizer, i, train_writer)
         validate(model, val_loader, i, val_writer)
 
         end = time.time()
-        print('Finish Epoch {}, Running time {}s ✓ \n'.format(i, int(end - start)))
+        print(f'Finish Epoch {i}, Running time {int(end - start)}s\n')
 
         state_dict = model.state_dict()
         for key in state_dict.keys():
@@ -206,16 +206,15 @@ def train(net, train_loader, optimizer, epoch, writer):
 
                 total_loss.append(loss.cpu().data.item())
 
-            t.close()
         except KeyboardInterrupt:
-            t.close()
             raise
+        finally:
+            t.close()
 
     print('\n')
-    print('Train Epoch %d, iter %d, loss %f' % (epoch, j, np.average(total_loss)))
-    print('rpn_cls %f, rpn_reg %f, rcnn_cls %f, rcnn_reg %f' % \
-          (np.average(rpn_cls_loss), np.average(rpn_reg_loss),
-           np.average(rcnn_cls_loss), np.average(rcnn_reg_loss)))
+    print(f'Train Epoch {epoch}, iter {j}, loss {np.average(total_loss)}')
+    print(f'rpn_cls {np.average(rpn_cls_loss)}, rpn_reg {np.average(rpn_reg_loss)}, \
+          rcnn_cls {np.average(rcnn_cls_loss)}, rcnn_reg {np.average(rcnn_reg_loss)}')
 
     writer.add_scalar('loss', np.average(total_loss), epoch)
     writer.add_scalar('rpn_cls', np.average(rpn_cls_loss), epoch)
@@ -265,10 +264,9 @@ def validate(net, val_loader, epoch, writer):
         total_loss.append(loss.cpu().data.item())
 
     print('\n')
-    print('Val Epoch %d, iter %d, loss %f' % (epoch, j, np.average(total_loss)))
-    print('rpn_cls %f, rpn_reg %f, rcnn_cls %f, rcnn_reg %f\n' % \
-        (np.average(rpn_cls_loss), np.average(rpn_reg_loss),
-        np.average(rcnn_cls_loss), np.average(rcnn_reg_loss)))
+    print(f'Validate Epoch {epoch}, iter {j}, loss {np.average(total_loss)}')
+    print(f'rpn_cls {np.average(rpn_cls_loss)}, rpn_reg {np.average(rpn_reg_loss)}, \
+          rcnn_cls {np.average(rcnn_cls_loss)}, rcnn_reg {np.average(rcnn_reg_loss)}')
 
     writer.add_scalar('loss', np.average(total_loss), epoch)
     writer.add_scalar('rpn_cls', np.average(rpn_cls_loss), epoch)
@@ -287,13 +285,6 @@ def validate(net, val_loader, epoch, writer):
 
     torch.cuda.empty_cache()
 
-
-def print_confusion_matrix(confusion_matrix):
-    line_new = '{:>4}  ' * (len(net_config['roi_names']) + 2)
-    print(line_new.format('gt/p', *list(range(len(net_config['roi_names']) + 1))))
-
-    for i in range(len(net_config['roi_names']) + 1):
-        print(line_new.format(i, *list(confusion_matrix[i])))
 
 
 if __name__ == '__main__':

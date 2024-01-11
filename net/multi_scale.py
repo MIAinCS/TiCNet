@@ -2,6 +2,7 @@ from torch import nn
 
 class conv_2nV1(nn.Module):
     def __init__(self, in_hc=32, in_lc=64, out_c=64, main=1):
+
         super(conv_2nV1, self).__init__()
         self.main = main
         mid_c = min(in_hc, in_lc)
@@ -71,7 +72,6 @@ class conv_2nV1(nn.Module):
 
             # stage 3
             out = self.relu(self.bnh_3(self.h2h_3(h_fuse)) + self.identity(in_h))
-            # 这里使用的不是in_h，而是h
         elif self.main == 1:
             # stage 2
             h2l = self.h2l_2(self.h2l_pool(h))
@@ -88,6 +88,7 @@ class conv_2nV1(nn.Module):
 
 class conv_3nV1(nn.Module):
     def __init__(self, in_hc=32, in_mc=64, in_lc=64, out_c=64):
+        
         super(conv_3nV1, self).__init__()
         self.upsample = nn.Upsample(scale_factor=2, mode="nearest")
         self.downsample = nn.AvgPool3d((2, 2, 2), stride=2)

@@ -6,7 +6,7 @@ from torch.autograd import Variable
 from net.layer.losses import *
 
 
-def rcnn_loss(logits, deltas, labels, targets, deltas_sigma=1.0):
+def rcnn_loss(logits, deltas, labels, targets):
     batch_size, num_class = logits.size(0), logits.size(1)
 
     # Weighted cross entropy for imbalance class distribution
@@ -66,10 +66,9 @@ def rcnn_iou_loss(rpn_proposals, truth_box):
                
             for nodule_box in truth_box[slice_idx]:
                 if box_ciou(nodule_rpn, torch.from_numpy(nodule_box).cuda()) < 0:
-                    print("---")
+                    print("Unavailable box.")
                 iou_score = box_ciou(nodule_rpn, torch.from_numpy(nodule_box).cuda())
                 iou_loss += iou_score
                 
     return iou_loss
-if __name__ == '__main__':
-    print('%s: calling main function ... ' % os.path.basename(__file__))
+

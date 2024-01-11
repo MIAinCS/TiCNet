@@ -71,7 +71,6 @@ def make_one_rcnn_target(cfg, input, proposal, truth_box, truth_label):
 
     fg_length = len(fg_index)
     bg_length = len(bg_index)
-    #print(fg_inds_length)
 
     sampled_assign = argmax_overlap[fg_index]
 

@@ -1,4 +1,7 @@
 # TiCNet: Transformer in Convolutional Neural Network for Pulmonary Nodule Detection on CT images
+```
+
+```
 
 ## Usage
 
@@ -10,14 +13,15 @@ TiCNet
     ├── dataset
     │   ├── bbox_reader.py          # Custom Dataset Loader
     │   └── collate.py              # Data collate function
-    ├── model                       # All models are created in this folder
+    ├── net                         # All models are created in this folder
     │   ├── __init__.py
     │   ├── layer                   # Loss function and other
+    │   ├── feature_net.py          # Backbone encoder
     │   ├── main_net.py             # Base network architecture
     │   ├── module.py               # Attention module
     │   ├── multi_scale.py          # multi-scale fusion module
-    │   ├── transformer.py          # Transformer module
-    │   └── position_encoding.py    # Build position encoding
+    │   ├── position_encoding.py    # Build position encoding
+    │   └── transformer.py          # Transformer module
     ├── utils
     │   ├── cvrt_annos_to_npy.py    # Annotation tranform
     │   ├── preprocess.py           # Preprocess the CT images
@@ -94,7 +98,6 @@ We conducted a 10-fold cross-validation test on the [LUNA16](https://luna16.gran
 | 9_Fold | 75.23 | 85.71 | 89.52 | 95.23 | 97.14 | 97.14 | 98.09 | 91.15 |
 | Avg.   | 79.55 | 85.42 | 89.09 | 92.22 | 95.37 | 96.52 | 96.95 | 90.73 |
 
-You can find these parameter models [here](https://drive.google.com/drive/folders/1kPABvWI6tLV0-MOQbppt_xNQePQAzHkt?usp=drive_link).
 
 ## References
 The code for this work is referenced from [https://github.com/uci-cbcl/NoduleNet](https://github.com/uci-cbcl/NoduleNet) and [https://github.com/facebookresearch/detr](https://github.com/facebookresearch/detr).

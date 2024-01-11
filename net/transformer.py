@@ -9,24 +9,52 @@ from torch import nn, Tensor
 
 class Transformer(nn.Module):
 
-    def __init__(self, d_model=512, nhead=8, num_queries=100, num_encoder_layers=6,
-                 num_decoder_layers=6, dim_feedforward=2048, dropout=0.1,
-                 activation="relu", normalize_before=False,
-                 return_intermediate_dec=False):
+    def __init__(
+        self, 
+        d_model: int = 512, 
+        nhead: int = 8, 
+        num_queries: int = 100, 
+        num_encoder_layers: int = 6,
+        num_decoder_layers: int = 6, 
+        dim_feedforward: int = 2048, 
+        dropout: float = 0.1,
+        activation: str = "relu", 
+        normalize_before: bool = False,
+        return_intermediate_dec: bool = False
+    ):
         super().__init__()
         self.d_model = d_model
 
-        encoder_layer = TransformerEncoderLayer(d_model, nhead, dim_feedforward,
-                                                dropout, activation, normalize_before)
+        encoder_layer = TransformerEncoderLayer(
+            d_model, 
+            nhead, 
+            dim_feedforward,
+            dropout, 
+            activation, 
+            normalize_before
+        )
         encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
         self.encoder = TransformerEncoder(
-            encoder_layer, num_encoder_layers, encoder_norm)
+            encoder_layer, 
+            num_encoder_layers, 
+            encoder_norm
+        )
 
-        decoder_layer = TransformerDecoderLayer(d_model, nhead, dim_feedforward,
-                                                dropout, activation, normalize_before)
+        decoder_layer = TransformerDecoderLayer(
+            d_model, 
+            nhead, 
+            dim_feedforward,
+            dropout, 
+            activation, 
+            normalize_before
+        )
         decoder_norm = nn.LayerNorm(d_model)
-        self.decoder = TransformerDecoder(decoder_layer, num_decoder_layers, decoder_norm,
-                                          return_intermediate=return_intermediate_dec)
+        self.decoder = TransformerDecoder(
+            decoder_layer, 
+            num_decoder_layers, 
+            decoder_norm,
+            return_intermediate=return_intermediate_dec
+        )
         self._reset_parameters()
         self.query_embed = nn.Embedding(num_queries, d_model)
         self.d_model = d_model

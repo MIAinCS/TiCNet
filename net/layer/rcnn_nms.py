@@ -130,10 +130,5 @@ def get_probability(cfg, mode, inputs, proposals, logits, deltas):
     return torch.from_numpy(output).cuda().float()
 
 
-#-----------------------------------------------------------------------------  
-if __name__ == '__main__':
-    print( '%s: calling main function ... ' % os.path.basename(__file__))
-
-
 
  
