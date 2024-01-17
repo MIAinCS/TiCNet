@@ -1,6 +1,17 @@
 # TiCNet: Transformer in Convolutional Neural Network for Pulmonary Nodule Detection on CT images
 ## Usage
 
+```
+@article{ma2024ticnet,
+  title={TiCNet: Transformer in Convolutional Neural Network for Pulmonary Nodule Detection on CT Images},
+  author={Ma, Ling and Li, Gen and Feng, Xingyu and Fan, Qiliang and Liu, Lizhi},
+  journal={Journal of Imaging Informatics in Medicine},
+  pages={1--13},
+  year={2024},
+  publisher={Springer}
+}
+```
+
 The project structure and intention are as follows :
 
 ```
